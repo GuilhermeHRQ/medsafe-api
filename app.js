@@ -5,7 +5,7 @@ const body = require('body-parser');
 require('./settings/db');
 require('./src/helpers/Authentication');
 
-global.port = 2000;
+global.port = 9500;
 
 module.exports = app;
 
