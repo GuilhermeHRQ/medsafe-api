@@ -3,10 +3,11 @@ CREATE OR REPLACE FUNCTION Seguranca.inserirUsuario(
     pSobrenome       VARCHAR,
     pEmail           VARCHAR,
     pCpf             CHAR,
-    pCelular         CHAR,
     pDataNascimento  DATE,
     pIdTipoSanguineo INTEGER,
-    pEndereco        JSON
+    pSenha           VARCHAR,
+    pEndereco        JSON,
+    pTelefone        JSON
 )
     RETURNS JSON AS $$
 
@@ -32,7 +33,6 @@ SELECT Seguranca.inserirUsuario(
 DECLARE
     vIdEndereco INTEGER;
     vIdUsuario  INTEGER;
-    telefone JSON;
 BEGIN
 
     IF EXISTS(SELECT 1
@@ -55,15 +55,11 @@ BEGIN
         );
     END IF;
 
-    -- TODO
-    -- Inserir vários telefones = endereco
-
     INSERT INTO Seguranca.endereco (
         cep,
         logradouro,
         bairro,
         numero,
-        uf,
         idcidade
     )
         SELECT
@@ -71,7 +67,6 @@ BEGIN
             e."logradouro",
             e."bairro",
             e."numero",
-            e."uf",
             e."idCidade"
         FROM json_to_record(pEndereco)
             AS e(
@@ -79,7 +74,6 @@ BEGIN
              "logradouro" VARCHAR(70),
              "bairro" VARCHAR(50),
              "numero" SMALLINT,
-             "uf" CHAR(2),
              "idCidade" INTEGER
              )
     RETURNING id
@@ -90,23 +84,35 @@ BEGIN
         sobrenome,
         email,
         cpf,
-        celular,
         datanascimento,
         idendereco,
-        idtiposanguineo
+        idtiposanguineo,
+        senha
     )
     VALUES (
         pNome,
         pSobrenome,
         pEmail,
         pCpf,
-        pCelular,
         pDataNascimento,
         vIdEndereco,
-        pIdTipoSanguineo
+        pIdTipoSanguineo,
+        md5(pSenha)
     )
     RETURNING id
         INTO vIdUsuario;
+
+    INSERT INTO Seguranca.telefone (
+        idusuario,
+        numero
+    )
+        SELECT
+            vIdUsuario,
+            tel."numero"
+        FROM json_to_recordset(pTelefone)
+            AS tel (
+             "numero" CHAR(11)
+             );
 
     RETURN json_build_object(
         'executionCode', 0,
@@ -154,7 +160,7 @@ BEGIN
     FROM Seguranca.usuario u
     WHERE
         CASE WHEN pFiltro IS NOT NULL
-            THEN u.nome ILIKE '%' || pFiltro || '%'
+            THEN u.nome ILIKE '%' || pFiltro || '%' OR u.sobrenome ILIKE '%' || pFiltro || '%'
         ELSE
             TRUE
         END
@@ -186,14 +192,13 @@ CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuarioPorId(
         "celular"         CHAR(11),
         "dataNascimento"  DATE,
         "idTipoSanguineo" INTEGER,
-        "endereco"        JSON
+        "endereco"        JSON,
+        "telefone"        JSON
     ) AS $$
 
 /*
   SELECT Seguranca.selecionarUsuarioPorId(1)
 */
-
-DECLARE
 
 BEGIN
     RETURN QUERY
@@ -203,13 +208,10 @@ BEGIN
         u.sobrenome,
         u.email,
         u.cpf,
-        u.celular,
         u.datanascimento,
         u.idtiposanguineo,
         (
-            SELECT CASE WHEN json_agg(ende) IS NOT NULL
-                THEN json_agg(ende)
-                   ELSE '[]' END
+            SELECT COALESCE(json_agg(endereco), '{}')
             FROM (
                      SELECT
                          ue.id         AS "id",
@@ -217,12 +219,21 @@ BEGIN
                          ue.logradouro AS "logradouro",
                          ue.bairro     AS "bairro",
                          ue.numero     AS "numero",
-                         ue.uf         AS "uf",
                          ue.idcidade   AS "idCidade"
                      FROM Seguranca.endereco ue
                      WHERE ue.id = u.idendereco
                  ) ende
-        ) AS "endereco"
+        ) AS "endereco",
+        (
+            SELECT COALESCE(json_agg(telefone), '[]')
+            FROM (
+                     SELECT
+                         ut.id     AS "id",
+                         ut.numero AS "numero"
+                     FROM Seguranca.telefone as ut
+                     WHERE ut.idusuario = pId
+                 ) tel
+        ) AS "telefone"
     FROM
         Seguranca.usuario u
     WHERE pId = u.id;
