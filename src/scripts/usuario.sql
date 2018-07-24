@@ -260,7 +260,6 @@ CREATE OR REPLACE FUNCTION Seguranca.atualizarUsuario(
     pSobrenome       VARCHAR(50),
     pEmail           VARCHAR(255),
     pCpf             CHAR(11),
-    pCelular         CHAR(11),
     pDataNascimento  DATE,
     pIdTipoSanguineo INTEGER,
     pAtivo           BOOLEAN,
@@ -345,7 +344,6 @@ BEGIN
         logradouro = ende."logradouro",
         bairro     = ende."bairro",
         numero     = ende."numero",
-        uf         = ende."uf",
         idcidade   = ende."idCidade"
     FROM (
              SELECT
@@ -354,7 +352,6 @@ BEGIN
                  "logradouro",
                  "bairro",
                  "numero",
-                 "uf",
                  "idCidade"
              FROM json_to_recordset(pEndereco)
                  AS x(
@@ -363,7 +360,6 @@ BEGIN
                   "logradouro" VARCHAR(70),
                   "bairro" VARCHAR(50),
                   "numero" SMALLINT,
-                  "uf" CHAR(2),
                   "idCidade" INTEGER
                   )
          ) ende
