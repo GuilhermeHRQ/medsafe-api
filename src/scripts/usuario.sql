@@ -13,13 +13,13 @@ CREATE OR REPLACE FUNCTION Seguranca.inserirUsuario(
 
 /*
 SELECT Seguranca.inserirUsuario(
-           'Jamal',
-           'Batata',
-           'b@outlook.com',
-           '4611496888',
-           '16992417882',
+           'Guilherme',
+           'Henrique',
+           'a@email.com',
+           '12345678909',
            '12-02-1999',
            '1',
+           'teste123',
            '{
              "cep": "14409015",
              "logradouro": "Rua Martiminiano Francisco de Andrade",
@@ -27,7 +27,11 @@ SELECT Seguranca.inserirUsuario(
              "numero": 2245,
              "uf": "SP",
              "idCidade": 1
-           }' :: JSON
+           }' :: JSON,
+           '[{
+            "numero": "16992417882",
+            "idTipoTelefone": 1
+           }]'
        )
 */
 DECLARE
@@ -104,14 +108,17 @@ BEGIN
 
     INSERT INTO Seguranca.telefone (
         idusuario,
-        numero
+        numero,
+        idtipo
     )
         SELECT
             vIdUsuario,
-            tel."numero"
+            tel."numero",
+            tel."idTipoTelefone"
         FROM json_to_recordset(pTelefone)
             AS tel (
-             "numero" CHAR(11)
+             "numero" CHAR(11),
+             "idTipoTelefone" INTEGER
              );
 
     RETURN json_build_object(
