@@ -15,8 +15,8 @@ CREATE OR REPLACE FUNCTION Seguranca.inserirUsuario(
 SELECT Seguranca.inserirUsuario(
            'Guilherme',
            'Henrique',
-           'a@email.com',
-           '12345678909',
+           'b@email.com',
+           '11111111111',
            '12-02-1999',
            '1',
            'teste123',
@@ -28,10 +28,16 @@ SELECT Seguranca.inserirUsuario(
              "uf": "SP",
              "idCidade": 1
            }' :: JSON,
-           '[{
-            "numero": "16992417882",
-            "idTipoTelefone": 1
-           }]'
+           '[
+               {
+                "numero": "16992417882",
+                "idTipoTelefone": 1
+               },
+               {
+                "numero": "1637034409",
+                "idTipoTelefone": 2
+               }
+           ]'
        )
 */
 DECLARE
@@ -148,7 +154,7 @@ CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuario(
 
 /*
 SELECT Seguranca.selecionarUsuario(
-           'Gui',
+           '',
            10,
            1
        )
@@ -257,7 +263,10 @@ CREATE OR REPLACE FUNCTION Seguranca.atualizarUsuario(
     pCelular         CHAR(11),
     pDataNascimento  DATE,
     pIdTipoSanguineo INTEGER,
-    pEndereco        JSON
+    pAtivo           BOOLEAN,
+    pSenha           VARCHAR(100),
+    pEndereco        JSON,
+    pTelefone        JSON
 )
     RETURNS JSON AS $$
 
@@ -320,9 +329,14 @@ BEGIN
         sobrenome       = pSobrenome,
         email           = pEmail,
         cpf             = pCpf,
-        celular         = pCelular,
         datanascimento  = pDataNascimento,
-        idtiposanguineo = pIdTipoSanguineo
+        idtiposanguineo = pIdTipoSanguineo,
+        ativo           = pAtivo,
+        senha           = (
+            CASE WHEN pSenha IS NOT NULL
+                THEN md5(pSenha)
+            ELSE senha END
+        )
     WHERE id = pIdUsuario;
 
     UPDATE Seguranca.endereco ue
