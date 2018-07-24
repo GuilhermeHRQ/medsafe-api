@@ -276,7 +276,6 @@ SELECT Seguranca.atualizarUsuario(
            'Alterando',
            'email@email.com',
            '46114968802',
-           '1637034409',
            '09-25-1998',
            '4',
            '[{
