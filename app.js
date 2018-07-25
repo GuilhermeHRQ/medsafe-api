@@ -4,8 +4,9 @@ const app = express();
 const body = require('body-parser');
 require('./settings/db');
 require('./src/helpers/Authentication');
+const response = require('./src/api/middleware/response');
 
-global.port = 9500;
+global.port = process.env.PORT || 9500;
 
 module.exports = app;
 
@@ -19,6 +20,7 @@ let allowCors = function (req, res, next) {
 };
 
 app.use(allowCors);
+app.use(response);
 app.use(body.json({limit: '30mb'}));
 app.use(body.urlencoded({limit: '30mb', extended: true}));
 

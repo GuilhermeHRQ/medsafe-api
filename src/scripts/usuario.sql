@@ -6,6 +6,7 @@ CREATE OR REPLACE FUNCTION Seguranca.inserirUsuario(
     pDataNascimento  DATE,
     pIdTipoSanguineo INTEGER,
     pSenha           VARCHAR,
+    pLogon           VARCHAR,
     pEndereco        JSON,
     pTelefone        JSON
 )
@@ -20,6 +21,7 @@ SELECT Seguranca.inserirUsuario(
            '12-02-1999',
            '1',
            'teste123',
+           'jamal',
            '{
              "cep": "14409015",
              "logradouro": "Rua Martiminiano Francisco de Andrade",
@@ -31,11 +33,11 @@ SELECT Seguranca.inserirUsuario(
            '[
                {
                 "numero": "16992417882",
-                "idTipoTelefone": 1
+                "idTipo": 1
                },
                {
                 "numero": "1637034409",
-                "idTipoTelefone": 2
+                "idTipo": 2
                }
            ]'
        )
@@ -44,7 +46,6 @@ DECLARE
     vIdEndereco INTEGER;
     vIdUsuario  INTEGER;
 BEGIN
-
     IF EXISTS(SELECT 1
               FROM Seguranca.usuario u
               WHERE u.email = pEmail)
@@ -62,6 +63,16 @@ BEGIN
         RETURN json_build_object(
             'executionCode', 2,
             'message', 'CPF já cadastrado'
+        );
+    END IF;
+
+    IF EXISTS(SELECT 1
+              FROM Seguranca.usuario u
+              WHERE u.logon = pLogon)
+    THEN
+        RETURN json_build_object(
+            'executionCode', 3,
+            'message', 'Logon já está sendo utilizado'
         );
     END IF;
 
@@ -97,7 +108,8 @@ BEGIN
         datanascimento,
         idendereco,
         idtiposanguineo,
-        senha
+        senha,
+        logon
     )
     VALUES (
         pNome,
@@ -107,7 +119,8 @@ BEGIN
         pDataNascimento,
         vIdEndereco,
         pIdTipoSanguineo,
-        md5(pSenha)
+        md5(pSenha),
+        pLogon
     )
     RETURNING id
         INTO vIdUsuario;
@@ -120,11 +133,11 @@ BEGIN
         SELECT
             vIdUsuario,
             tel."numero",
-            tel."idTipoTelefone"
+            tel."idTipo"
         FROM json_to_recordset(pTelefone)
             AS tel (
              "numero" CHAR(11),
-             "idTipoTelefone" INTEGER
+             "idTipo" INTEGER
              );
 
     RETURN json_build_object(
@@ -202,15 +215,16 @@ CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuarioPorId(
         "sobrenome"       VARCHAR(50),
         "email"           VARCHAR(255),
         "cpf"             CHAR(11),
-        "celular"         CHAR(11),
         "dataNascimento"  DATE,
         "idTipoSanguineo" INTEGER,
+        "ativo"           BOOLEAN,
+        "logon"           VARCHAR(30),
         "endereco"        JSON,
         "telefone"        JSON
     ) AS $$
 
 /*
-  SELECT Seguranca.selecionarUsuarioPorId(1)
+  SELECT Seguranca.selecionarUsuarioPorId(3)
 */
 
 BEGIN
@@ -223,8 +237,10 @@ BEGIN
         u.cpf,
         u.datanascimento,
         u.idtiposanguineo,
+        u.ativo,
+        u.logon,
         (
-            SELECT COALESCE(json_agg(endereco), '{}')
+            SELECT COALESCE(json_agg(ende), '{}')
             FROM (
                      SELECT
                          ue.id         AS "id",
@@ -238,11 +254,12 @@ BEGIN
                  ) ende
         ) AS "endereco",
         (
-            SELECT COALESCE(json_agg(telefone), '[]')
+            SELECT COALESCE(json_agg(tel), '[]')
             FROM (
                      SELECT
                          ut.id     AS "id",
-                         ut.numero AS "numero"
+                         ut.numero AS "numero",
+                         ut.idtipo AS "idTipo"
                      FROM Seguranca.telefone as ut
                      WHERE ut.idusuario = pId
                  ) tel
@@ -264,6 +281,7 @@ CREATE OR REPLACE FUNCTION Seguranca.atualizarUsuario(
     pIdTipoSanguineo INTEGER,
     pAtivo           BOOLEAN,
     pSenha           VARCHAR(100),
+    pLogon           VARCHAR(30),
     pEndereco        JSON,
     pTelefone        JSON
 )
@@ -271,25 +289,40 @@ CREATE OR REPLACE FUNCTION Seguranca.atualizarUsuario(
 
 /*
 SELECT Seguranca.atualizarUsuario(
-            1,
-           'Teste',
-           'Alterando',
-           'email@email.com',
-           '46114968802',
-           '09-25-1998',
-           '4',
-           '[{
-             "id": 1,
+           3,
+           'Robson Paes',
+           'Tronquito',
+           'b@email.com',
+           '32112332101',
+           '02-12-2000',
+           '2',
+           true,
+           null,
+           'jamal',
+           '{
+             "id": 3,
              "cep": "14409013",
-             "logradouro": "Rua Martinho da Vila",
+             "logradouro": "Rua Azira Nassif",
              "bairro": "Jdm. Barão",
-             "numero": 22,
+             "numero": 50,
              "uf": "SP",
              "idCidade": 1
-           }]' :: JSON
+           }' :: JSON,
+           '[
+             {
+               "id": 11,
+               "numero": "1637034402",
+               "idTipo": 2
+             },
+             {
+               "id": 12,
+               "numero": "16992523350",
+               "idTipo": 1
+             }
+           ]'
        )
-*/
 
+*/
 BEGIN
     IF NOT EXISTS(SELECT 1
                   FROM Seguranca.usuario u
@@ -322,6 +355,16 @@ BEGIN
         );
     END IF;
 
+    IF EXISTS(SELECT 1
+              FROM Seguranca.usuario u
+              WHERE u.logon = pLogon AND u.id <> pIdUsuario)
+    THEN
+        RETURN json_build_object(
+            'executionCode', 4,
+            'message', 'Logon já cadastrado'
+        );
+    END IF;
+
     UPDATE Seguranca.usuario u
     SET nome            = pNome,
         sobrenome       = pSobrenome,
@@ -334,7 +377,8 @@ BEGIN
             CASE WHEN pSenha IS NOT NULL
                 THEN md5(pSenha)
             ELSE senha END
-        )
+        ),
+        logon           = pLogon
     WHERE id = pIdUsuario;
 
     UPDATE Seguranca.endereco ue
@@ -352,7 +396,7 @@ BEGIN
                  "bairro",
                  "numero",
                  "idCidade"
-             FROM json_to_recordset(pEndereco)
+             FROM json_to_record(pEndereco)
                  AS x(
                   "id" INTEGER,
                   "cep" CHAR(8),
@@ -363,6 +407,54 @@ BEGIN
                   )
          ) ende
     WHERE ue.id = ende."id";
+
+    -- DELETA DO BANCO OS TELEFONES QUE NÃO FOREM RETORNADOS DO FRONT
+    DELETE FROM Seguranca.telefone
+    WHERE idusuario = pIdUsuario
+          AND id NOT IN (SELECT id
+                         FROM json_to_recordset(pTelefone)
+                             AS x(
+                              "id" INTEGER
+                              )
+                         WHERE id IS NOT NULL);
+
+    -- UPDATE NO BANCO DOS TELEFONES QUE FOREM RETORNADOS DO FRONT
+    UPDATE Seguranca.telefone ut
+    SET numero = te."numero",
+        idtipo = te."idTipo"
+    FROM (
+             SELECT
+                 "id",
+                 "numero",
+                 "idTipo"
+             FROM json_to_recordset(pTelefone)
+                 AS x(
+                  "id" INTEGER,
+                  "numero" CHAR(11),
+                  "idTipo" INTEGER
+                  )
+             WHERE id IS NOT NULL
+         ) te
+    WHERE ut.idusuario = pIdUsuario AND ut.id = te."id";
+
+    -- INSERE NO BANCO ONDE O JSON NÃO TEM ID
+    INSERT INTO Seguranca.telefone (
+        idusuario,
+        numero,
+        idtipo
+    )
+        SELECT
+            pIdUsuario,
+            "numero",
+            "idTipo"
+        FROM json_to_recordset(pTelefone)
+            AS x(
+             "id" INTEGER,
+             "numero" CHAR(11),
+             "idTipo" INTEGER
+             )
+        WHERE id IS NULL;
+
 
     RETURN json_build_object(
         'executionCode', 0,
@@ -393,6 +485,9 @@ BEGIN
             'message', 'Usuário não encontrado'
         );
     END IF;
+
+    DELETE FROM Seguranca.telefone
+    WHERE idusuario = pId;
 
     DELETE FROM Seguranca.usuario u
     WHERE u.id = pId
