@@ -172,11 +172,10 @@ SELECT Seguranca.selecionarUsuario(
            1
        )
        */
-DECLARE
 BEGIN
     RETURN QUERY
     SELECT
-        COUNT(u.id)
+        COUNT(1)
         OVER (
             PARTITION BY 1 ),
         u.id,
@@ -220,7 +219,7 @@ CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuarioPorId(
         "ativo"           BOOLEAN,
         "logon"           VARCHAR(30),
         "endereco"        JSON,
-        "telefone"        JSON
+        "telefones"       JSON
     ) AS $$
 
 /*
@@ -263,7 +262,7 @@ BEGIN
                      FROM Seguranca.telefone as ut
                      WHERE ut.idusuario = pId
                  ) tel
-        ) AS "telefone"
+        ) AS "telefones"
     FROM
         Seguranca.usuario u
     WHERE pId = u.id;
@@ -498,7 +497,7 @@ BEGIN
     WHERE ue.id = vIdEndereco;
 
     RETURN json_build_object(
-        'executionCode', 1,
+        'executionCode', 0,
         'message', 'Usuário excluído com sucesso'
     );
 END;

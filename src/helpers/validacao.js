@@ -73,6 +73,12 @@ function ValidationContract(params) {
         return this
     };
 
+    this.isDate = () => {
+        if (!((new Date(params[this.field]) !== 'Invalid Date') && !isNaN(new Date(params[this.field]))))
+            this.errors.push(`O campo ${this.field} deve ser uma data`);
+        return this
+    };
+
     this.end = () => {
         if (this.errors.length > 0) {
             this.error = {

@@ -1,34 +1,40 @@
 const jwt = require('jsonwebtoken');
 const PASSWORD = 'X3SQU3';
 
-function verify(funcao) {
+function verify(fn) {
     return async (req, res, next) => {
+        if (req.method === 'OPTIONS') {
+            return res.finish({
+                httpCode: 204
+            });
+        }
 
-        if (req.method === 'OPTIONS')
-            return res.status(204).end();
+        const auth = req.headers.authentication || null;
 
-        let auth = req.headers.authentication ? req.headers.authentication : null;
+        if (!auth) {
+            return res.finish({
+                httpCode: 401,
+                message: 'Acesso restrito'
+            });
+        }
 
-        if (!auth) return res.status(400).json({error: 'Token não fornecido'});
-
-        jwt.verify(auth, PASSWORD, async function (error, data) {
-            if (error) return res.status(401).json({error: 'Sessão invalida'});
+        jwt.verify(auth, global.SALT_KEY, async (error, data) => {
+            if (error) {
+                return res.finish({
+                    httpCode: 401,
+                    message: 'Sessão inválida'
+                });
+            }
 
             req.token = data;
 
-            funcao(req, res, next).catch(next);
-        })
+            fn(req, res, next).catch(next);
+        });
     };
 }
 
-async function gerarToken(req, data) {
-    return await jwt.sign({
-        user: req.body.login,
-        idUsuario: data.content.id,
-        admin: data.content.admin
-    }, PASSWORD, {
-        //expiresIn: '2 days'
-    })
+async function gerarToken(data) {
+    return jwt.sign(data, PASSWORD, { expiresIn: '99d' });
 }
 
 global.gerarToken = gerarToken;
