@@ -16,7 +16,7 @@ let allowCors = function (req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authentication');
     res.header('Access-Control-Allow-Credentials', 'true');
 
-    next()
+    next();
 };
 
 app.use(allowCors);
