@@ -503,3 +503,33 @@ BEGIN
 END;
 $$
 LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION Seguranca.preLogin(
+    pLogin VARCHAR
+)
+    RETURNS JSON AS $$
+
+/*
+SELECT Seguranca.preLogin(
+    'a@email.com'
+);
+*/
+
+BEGIN
+    IF NOT EXISTS(SELECT 1
+                  FROM Seguranca.usuario u
+                  WHERE u.logon = pLogin OR u.email = pLogin)
+    THEN
+        RETURN json_build_object(
+            'executionCode', 1,
+            'message', 'Usuário não encontrado'
+        );
+    END IF;
+
+    RETURN json_build_object(
+        'executionCode', 0,
+        'message', 'OK'
+    );
+END;
+$$
+LANGUAGE PLPGSQL;
