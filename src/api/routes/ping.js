@@ -1,5 +1,5 @@
 module.exports = (app) => {
     app.get('/ping', (req, res) => {
-        return res.status(200).json({data: new Date(), message: 'TESTANDO'});
+        return res.status(200).json({data: new Date()});
     });
 };
