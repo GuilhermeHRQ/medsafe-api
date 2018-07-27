@@ -8,7 +8,7 @@ require('./settings/db');
 require('./src/helpers/Authentication');
 
 global.config = {
-    host: 'http://localhost',
+    host: process.env.HOST || 'http://localhost',
     port: process.env.PORT || 9500
 };
 
