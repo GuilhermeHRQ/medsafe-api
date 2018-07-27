@@ -18,7 +18,7 @@ function verify(fn) {
             });
         }
 
-        jwt.verify(auth, global.SALT_KEY, async (error, data) => {
+        jwt.verify(auth, PASSWORD, async (error, data) => {
             if (error) {
                 return res.finish({
                     httpCode: 401,

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION Seguranca.inserirUsuario(
+CREATE OR REPLACE FUNCTION Seguranca.InserirUsuario(
     pNome            VARCHAR,
     pSobrenome       VARCHAR,
     pEmail           VARCHAR,
@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION Seguranca.inserirUsuario(
     RETURNS JSON AS $$
 
 /*
-SELECT Seguranca.inserirUsuario(
+SELECT * FROM Seguranca.inserirUsuario(
            'Guilherme',
            'Henrique',
            'b@email.com',
@@ -51,8 +51,8 @@ BEGIN
               WHERE u.email = pEmail)
     THEN
         RETURN json_build_object(
-            'executionCode', 1,
-            'message', 'Email já cadastrado'
+                'executionCode', 1,
+                'message', 'Email já cadastrado'
         );
     END IF;
 
@@ -61,8 +61,8 @@ BEGIN
               WHERE u.cpf = pCpf)
     THEN
         RETURN json_build_object(
-            'executionCode', 2,
-            'message', 'CPF já cadastrado'
+                'executionCode', 2,
+                'message', 'CPF já cadastrado'
         );
     END IF;
 
@@ -71,8 +71,8 @@ BEGIN
               WHERE u.logon = pLogon)
     THEN
         RETURN json_build_object(
-            'executionCode', 3,
-            'message', 'Logon já está sendo utilizado'
+                'executionCode', 3,
+                'message', 'Logon já está sendo utilizado'
         );
     END IF;
 
@@ -141,18 +141,17 @@ BEGIN
              );
 
     RETURN json_build_object(
-        'executionCode', 0,
-        'message', 'Usuário inserido com sucesso',
-        'content', json_build_object(
-            'id', vIdUsuario
-        )
+            'message', 'Usuário inserido com sucesso',
+            'content', json_build_object(
+                    'id', vIdUsuario
+            )
     );
 END;
 $$
 LANGUAGE PLPGSQL;
 
 
-CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuario(
+CREATE OR REPLACE FUNCTION Seguranca.SelecionarUsuario(
     pFiltro VARCHAR(200),
     pLinhas INTEGER,
     pPagina INTEGER
@@ -166,7 +165,7 @@ CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuario(
     ) AS $$
 
 /*
-SELECT Seguranca.selecionarUsuario(
+SELECT * FROM Seguranca.selecionarUsuario(
            '',
            10,
            1
@@ -205,7 +204,7 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuarioPorId(
+CREATE OR REPLACE FUNCTION Seguranca.SelecionarUsuarioPorId(
     pId INTEGER
 )
     RETURNS TABLE(
@@ -223,7 +222,7 @@ CREATE OR REPLACE FUNCTION Seguranca.selecionarUsuarioPorId(
     ) AS $$
 
 /*
-  SELECT Seguranca.selecionarUsuarioPorId(3)
+  SELECT * FROM Seguranca.selecionarUsuarioPorId(3)
 */
 
 BEGIN
@@ -270,7 +269,7 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION Seguranca.atualizarUsuario(
+CREATE OR REPLACE FUNCTION Seguranca.AtualizarUsuario(
     pIdUsuario       INTEGER,
     pNome            VARCHAR(50),
     pSobrenome       VARCHAR(50),
@@ -287,7 +286,7 @@ CREATE OR REPLACE FUNCTION Seguranca.atualizarUsuario(
     RETURNS JSON AS $$
 
 /*
-SELECT Seguranca.atualizarUsuario(
+SELECT * FROM Seguranca.atualizarUsuario(
            3,
            'Robson Paes',
            'Tronquito',
@@ -329,8 +328,8 @@ BEGIN
     THEN
         RETURN
         json_build_object(
-            'executionCode', 1,
-            'message', 'Usuário não encontrado'
+                'executionCode', 1,
+                'message', 'Usuário não encontrado'
         );
     END IF;
 
@@ -339,8 +338,8 @@ BEGIN
               WHERE u.email = pEmail AND u.id <> pIdUsuario)
     THEN
         RETURN json_build_object(
-            'executionCode', 2,
-            'message', 'Email já cadastrado'
+                'executionCode', 2,
+                'message', 'Email já cadastrado'
         );
     END IF;
 
@@ -349,8 +348,8 @@ BEGIN
               WHERE u.cpf = pCpf AND u.id <> pIdUsuario)
     THEN
         RETURN json_build_object(
-            'executionCode', 3,
-            'message', 'CPF já cadastrado'
+                'executionCode', 3,
+                'message', 'CPF já cadastrado'
         );
     END IF;
 
@@ -359,8 +358,8 @@ BEGIN
               WHERE u.logon = pLogon AND u.id <> pIdUsuario)
     THEN
         RETURN json_build_object(
-            'executionCode', 4,
-            'message', 'Logon já cadastrado'
+                'executionCode', 4,
+                'message', 'Logon já cadastrado'
         );
     END IF;
 
@@ -456,20 +455,19 @@ BEGIN
 
 
     RETURN json_build_object(
-        'executionCode', 0,
-        'message', 'Usuário atualizado com sucesso'
+            'message', 'Usuário atualizado com sucesso'
     );
 END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION Seguranca.removerUsuario(
+CREATE OR REPLACE FUNCTION Seguranca.RemoverUsuario(
     pId INTEGER
 )
     RETURNS JSON AS $$
 
 /*
-SELECT Seguranca.removerUsuario(2)
+SELECT * FROM Seguranca.removerUsuario(2)
 */
 
 DECLARE
@@ -480,8 +478,8 @@ BEGIN
                   WHERE u.id = pId)
     THEN
         RETURN json_build_object(
-            'executionCode', 1,
-            'message', 'Usuário não encontrado'
+                'executionCode', 1,
+                'message', 'Usuário não encontrado'
         );
     END IF;
 
@@ -497,39 +495,74 @@ BEGIN
     WHERE ue.id = vIdEndereco;
 
     RETURN json_build_object(
-        'executionCode', 0,
-        'message', 'Usuário excluído com sucesso'
+            'message', 'Usuário excluído com sucesso'
     );
 END;
 $$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION Seguranca.preLogin(
-    pLogin VARCHAR
+CREATE OR REPLACE FUNCTION Seguranca.LoginUsuario(
+    pLogin VARCHAR,
+    pSenha VARCHAR
 )
-    RETURNS JSON AS $$
+    RETURNS TABLE(
+        "id"           INTEGER,
+        "nome"         VARCHAR(50),
+        "sobrenome"    VARCHAR(50),
+        "email"        VARCHAR(255),
+        "logon"        VARCHAR(30),
+        "ativo"        BOOLEAN,
+        "senhaCorreta" BOOLEAN
+    ) AS $$
 
 /*
-SELECT Seguranca.preLogin(
-    'a@email.com'
+SELECT * FROM Seguranca.loginUsuario(
+    'a@email.com',
+    ''
 );
 */
 
 BEGIN
-    IF NOT EXISTS(SELECT 1
-                  FROM Seguranca.usuario u
-                  WHERE u.logon = pLogin OR u.email = pLogin)
-    THEN
-        RETURN json_build_object(
-            'executionCode', 1,
-            'message', 'Usuário não encontrado'
-        );
-    END IF;
+    RETURN QUERY
+    SELECT
+        u.id,
+        u.nome,
+        u.sobrenome,
+        u.email,
+        u.logon,
+        u.ativo,
+        (md5(pSenha) = u.senha)
+    FROM Seguranca.usuario u
+    WHERE u.logon = pLogin OR u.email = pLogin;
+END;
+$$
+LANGUAGE PLPGSQL;
 
-    RETURN json_build_object(
-        'executionCode', 0,
-        'message', 'OK'
-    );
+CREATE OR REPLACE FUNCTION Seguranca.RefazLogin(
+    pId INTEGER
+)
+    RETURNS TABLE(
+        "id"        INTEGER,
+        "nome"      VARCHAR(50),
+        "sobrenome" VARCHAR(50),
+        "email"     VARCHAR(255),
+        "logon"     VARCHAR(30)
+    ) AS $$
+
+/*
+SELECT * FROM Seguranca.RefazLogin(3)
+*/
+
+BEGIN
+    RETURN QUERY
+    SELECT
+        u.id,
+        u.nome,
+        u.sobrenome,
+        u.email,
+        u.logon
+    FROM Seguranca.usuario u
+    WHERE u.id = pId;
 END;
 $$
 LANGUAGE PLPGSQL;

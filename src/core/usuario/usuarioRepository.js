@@ -5,11 +5,14 @@ module.exports = {
     selecionar,
     selecionarPorId,
     atualizar,
-    remover
+    remover,
+    preLogin,
+    login,
+    refazerLogin
 };
 
 async function inserir(params) {
-    const data = await db.json('Seguranca.inserirUsuario', [
+    const data = await db.json('Seguranca.InserirUsuario', [
         params.nome,
         params.sobrenome,
         params.email,
@@ -40,7 +43,7 @@ async function inserir(params) {
 }
 
 async function selecionar(params) {
-    return await db.func('Seguranca.selecionarUsuario', [
+    return await db.func('Seguranca.SelecionarUsuario', [
         params.filtro,
         params.linhas,
         params.pagina
@@ -48,7 +51,7 @@ async function selecionar(params) {
 }
 
 async function selecionarPorId(params) {
-    const data = await db.func('Seguranca.selecionarUsuarioPorId', [
+    const data = await db.func('Seguranca.SelecionarUsuarioPorId', [
         params.id
     ]);
 
@@ -58,7 +61,7 @@ async function selecionarPorId(params) {
 }
 
 async function atualizar(params) {
-    const data = await db.json('Seguranca.atualizarUsuario', [
+    const data = await db.json('Seguranca.AtualizarUsuario', [
         params.id,
         params.nome,
         params.sobrenome,
@@ -96,7 +99,7 @@ async function atualizar(params) {
 }
 
 async function remover(params) {
-    const data = await db.json('Seguranca.removerUsuario', [
+    const data = await db.json('Seguranca.RemoverUsuario', [
         params.id
     ]);
 
@@ -110,6 +113,78 @@ async function remover(params) {
 
     if (error) {
         throw error;
+    }
+
+    return data;
+}
+
+
+async function preLogin(params) {
+    let data = await db.func('Seguranca.LoginUsuario', [
+        params.login,
+        params.senha
+    ]);
+
+    data = data[0];
+
+    if (!data) {
+        return {
+            executionCode: 1,
+            message: 'Usuário não encontrado'
+        }
+    } else if (!data.ativo) {
+        return {
+            executionCode: 2,
+            message: 'Usuário bloqueado ou inativo'
+        }
+    }
+
+    return data;
+}
+
+async function login(params) {
+    let data = await db.func('Seguranca.LoginUsuario', [
+        params.login,
+        params.senha
+    ]);
+
+    data = data[0];
+
+    if (!data) {
+        return {
+            executionCode: 1,
+            message: 'Usuário não encontrado'
+        }
+    } else if (!data.senhaCorreta) {
+        return {
+            executionCode: 2,
+            message: 'Senha incorreta'
+        }
+    } else if (!data.ativo) {
+        return {
+            executionCode: 3,
+            message: 'Usuário bloqueado ou inativo'
+        }
+    }
+
+    delete data.ativo;
+    delete data.senhaCorreta;
+
+    return data;
+}
+
+async function refazerLogin(params) {
+    let data = await db.func('Seguranca.RefazLogin', [
+        params.id
+    ]);
+
+    data = data[0];
+
+    if (!data) {
+        return {
+            executionCode: 1,
+            message: 'Usuário não encontrado'
+        }
     }
 
     return data;

@@ -5,7 +5,9 @@ module.exports = {
     selecionar,
     selecionarPorId,
     atualizar,
-    remover
+    remover,
+    preLogin,
+    login
 };
 
 async function inserir(params) {
@@ -170,6 +172,45 @@ async function remover(params) {
             .isNotNull()
 
             .end();
+    } catch (error) {
+        error.httpCode = 400;
+        throw error;
+    }
+}
+
+async function preLogin(params) {
+    const data = new validate.ValidationContract(params);
+
+    try {
+        data
+            .start('login')
+            .isRequired()
+            .isNotNull()
+            .isString()
+
+            .end();
+    } catch (error) {
+        error.httpCode = 400;
+        throw error;
+    }
+}
+
+async function login(params) {
+    const data = new validate.ValidationContract(params);
+
+    try {
+        data
+                .start('login')
+                .isRequired()
+                .isNotNull()
+                .isString()
+
+                .start('senha')
+                .isRequired()
+                .isNotNull()
+                .isString()
+
+                .end();
     } catch (error) {
         error.httpCode = 400;
         throw error;

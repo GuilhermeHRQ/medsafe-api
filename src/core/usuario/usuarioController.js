@@ -1,12 +1,16 @@
 const scope = require('./usuarioScope');
 const repository = require('./usuarioRepository');
+const service = require('./usuarioService');
 
 module.exports = {
     inserir,
     selecionar,
     selecionarPorId,
     atualizar,
-    remover
+    remover,
+    preLogin,
+    login,
+    refazerLogin
 };
 
 async function inserir(req, res) {
@@ -141,5 +145,71 @@ async function remover(req, res) {
             httpCode: error.httpCode || 500,
             error
         });
+    }
+}
+
+async function preLogin(req, res) {
+    try {
+        const params = {
+            login: req.body.login,
+        };
+
+        await scope.preLogin(params);
+
+        const data = await service.preLogin(params);
+
+        return res.finish({
+            content: {
+                user: data
+            }
+        });
+
+    } catch (error) {
+        return res.finish({
+            httpCode: error.httpCode || 500,
+            error
+        });
+    }
+}
+
+async function login(req, res) {
+    try {
+        const params = {
+            login: req.body.login,
+            senha: req.body.senha
+        };
+
+        await scope.login(params);
+
+        const content = await service.login(params);
+
+        return res.finish({
+            content
+        });
+
+    } catch (error) {
+        return res.finish({
+            httpCode: error.httpCode || 500,
+            error
+        });
+    }
+}
+
+async function refazerLogin(req, res) {
+    try {
+        const params = {
+            id: req.token.id
+        };
+
+        const content = await service.refazerLogin(params);
+
+        return res.finish({
+            content
+        });
+    } catch (error) {
+        return res.finish({
+            httpCode: error.httpCode || 500,
+            error
+        })
     }
 }
